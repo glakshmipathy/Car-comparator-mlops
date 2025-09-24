@@ -24,21 +24,25 @@ jobs:
           HF_USERNAME: glakshmipathy
           SPACE_NAME: Car-comparator-mlops
         run: |
-          # The rsync command to copy your files to a local folder named after the space, excluding the git and chroma db files.
-          rsync -av --exclude='.git' --exclude='chroma_db/' --delete-after ./ ${{ env.SPACE_NAME }}
+          # This is the corrected shell script. The entire block should be replaced.
           
-          # Change directory to the local folder
-          cd ${{ env.SPACE_NAME }}
+          # Clone the Hugging Face Space repository
+          git clone https://huggingface.co/spaces/$HF_USERNAME/$SPACE_NAME hf_space
+          
+          # Sync files from the GitHub repo to the cloned Space repo
+          # --delete-after ensures that files removed from GitHub are also removed from the Space
+          rsync -av --exclude='.git' --exclude='chroma_db/' --delete-after ./ hf_space/
+          
+          # Navigate into the cloned repository
+          cd hf_space
           
           # Configure Git user details for the commit
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
           
-          # Add all files to the staging area
+          # Add all changes, commit, and push back to Hugging Face Spaces
           git add .
-          
-          # Create a new commit with a descriptive message.
           git commit -m "Sync from GitHub Actions"
           
-          # Force push the changes to the Hugging Face Space
-          git push --force https://${{ env.HF_USERNAME }}:${{ env.HF_TOKEN }}@huggingface.co/spaces/${{ env.HF_USERNAME }}/${{ env.SPACE_NAME }} main
+          # Force push the changes to the Hugging Face Space to overwrite any remote changes.
+          git push --force
