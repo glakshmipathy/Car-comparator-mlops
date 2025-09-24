@@ -1,0 +1,48 @@
+name: Deploy to Hugging Face Spaces
+
+on:
+  push:
+    branches:
+      - main # This workflow runs every time you push to the 'main' branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Install rsync
+        # This step installs rsync on the GitHub Actions runner, which is used for syncing files
+        run: sudo apt-get update && sudo apt-get install -y rsync
+
+      - name: Sync with Hugging Face Space
+        env:
+          # HF_TOKEN is a GitHub secret. The value is securely passed at runtime.
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_USERNAME: glakshmipathy
+          SPACE_NAME: Car-comparator-mlops
+        run: |
+          # This is the corrected shell script. The entire block should be replaced.
+          
+          # Clone the Hugging Face Space repository with authentication
+          git clone https://${{ env.HF_USERNAME }}:${{ secrets.HF_TOKEN }}@huggingface.co/spaces/${{ env.HF_USERNAME }}/${{ env.SPACE_NAME }} hf_space
+          
+          # Sync files from the GitHub repo to the cloned Space repo
+          # --delete-after ensures that files removed from GitHub are also removed from the Space
+          rsync -av --exclude='.git' --exclude='chroma_db/' --delete-after ./ hf_space/
+          
+          # Navigate into the cloned repository
+          cd hf_space
+          
+          # Configure Git user details for the commit
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          
+          # Add all changes, commit, and push back to Hugging Face Spaces
+          git add .
+          git commit -m "Sync from GitHub Actions"
+          
+          # Force push the changes to the Hugging Face Space to overwrite any remote changes.
+          git push --force
