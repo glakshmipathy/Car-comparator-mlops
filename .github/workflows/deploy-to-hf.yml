@@ -1,0 +1,43 @@
+name: Deploy to Hugging Face Spaces
+
+on:
+  push:
+    branches:
+      - main # The branch you want to deploy from
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Install rsync
+        run: sudo apt-get update && sudo apt-get install -y rsync
+
+      - name: Sync to Hugging Face Space
+        env:
+          # Use the HF_TOKEN secret you created in GitHub
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_USERNAME: glakshmipathy
+          SPACE_NAME: Car-comparator-mlops
+        run: |
+          # Clone the Hugging Face Space repo to a temporary folder
+          git clone https://huggingface.co/spaces/$HF_USERNAME/$SPACE_NAME hf_space
+
+          # Use rsync to copy all files from your GitHub repo to the cloned Space repo,
+          # excluding the .git folder and the large chroma_db folder.
+          rsync -av --exclude='.git' --exclude='chroma_db/' --delete-after ./ hf_space/
+
+          # Navigate into the cloned repository
+          cd hf_space
+
+          # Set Git user details for the commit
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+
+          # Add all changes, commit, and push back to Hugging Face Spaces
+          git add .
+          git commit -m "Sync from GitHub"
+          git push https://glakshmipathy:$HF_TOKEN@huggingface.co/spaces/glakshmipathy/Car-comparator-mlops main
