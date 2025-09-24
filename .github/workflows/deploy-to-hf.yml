@@ -41,4 +41,4 @@ jobs:
           git commit -m "Sync from GitHub Actions"
           
           # Force push the changes to the Hugging Face Space to overwrite any remote changes.
-          git push --force https://${{ env.HF_USERNAME }}:${{ env.HF_TOKEN }}@huggingface.co/spaces/${{ env.HF_USERNAME }}/${{ env.SPACE_NAME }} main
+          git push --force https://${{ env.HF_USERNAME }}:${{ secrets.HF_TOKEN }}@huggingface.co/spaces/${{ env.HF_USERNAME }}/${{ env.SPACE_NAME }} main
