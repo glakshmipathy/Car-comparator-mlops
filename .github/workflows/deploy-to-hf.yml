@@ -5,6 +5,10 @@ on:
     branches:
       - main # This workflow runs every time you push to the 'main' branch
 
+# This block grants the necessary permissions to the GITHUB_TOKEN
+permissions:
+  contents: write
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
