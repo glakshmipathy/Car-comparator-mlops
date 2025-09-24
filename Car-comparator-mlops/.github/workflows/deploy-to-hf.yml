@@ -1,0 +1,52 @@
+name: Deploy to Hugging Face Spaces
+
+on:
+  push:
+    branches:
+      - main # This workflow runs every time you push to the 'main' branch
+
+# This block grants the necessary permissions to the GITHUB_TOKEN
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Install rsync
+        # This step installs rsync on the GitHub Actions runner, which is used for syncing files
+        run: sudo apt-get update && sudo apt-get install -y rsync
+
+      - name: Pull Git LFS files
+        # This new step downloads the actual large files tracked by LFS
+        run: git lfs pull
+
+      - name: Sync with Hugging Face Space
+        env:
+          # HF_TOKEN is a GitHub secret. The value is securely passed at runtime.
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_USERNAME: glakshmipathy
+          SPACE_NAME: Car-comparator-mlops
+        run: |
+          # The rsync command to copy your files to a local folder named after the space, excluding the git and chroma db files.
+          rsync -av --exclude='.git' --exclude='chroma_db/' --delete-after ./ ${{ env.SPACE_NAME }}
+          
+          # Change directory to the local folder
+          cd ${{ env.SPACE_NAME }}
+          
+          # Configure Git user details for the commit
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          
+          # Add all files to the staging area
+          git add .
+          
+          # Create a new commit with a descriptive message.
+          git commit -m "Sync from GitHub Actions"
+          
+          # Force push the changes to the Hugging Face Space to overwrite any remote changes.
+          git push --force
